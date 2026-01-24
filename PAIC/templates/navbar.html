@@ -1,0 +1,18 @@
+<nav class="navbar">
+    <div class="navbar-container">
+        <a href="/" class="navbar-brand">
+            <span>🏢</span>
+            <span>Business Builder</span>
+        </a>
+        
+        <button class="navbar-toggle" onclick="toggleMobileMenu()">☰</button>
+        
+        <ul class="navbar-tabs" id="navbarTabs">
+            {% for label, url in tabs %}
+            <li class="navbar-tab {% if label == active_tab %}active{% endif %}">
+                <a href="{{ url }}">{{ label }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</nav>

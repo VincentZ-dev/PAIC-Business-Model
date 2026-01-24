@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Business Builder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #144C8C, #00498D, #00264D);
+        }
+        
+        .dashboard-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 12px 32px rgba(0,0,0,.35);
+            width: 100%;
+        }
+        
+        h1 {
+            color: #00498D;
+            margin-top: 0;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #00264D, #00498D);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="dashboard-content">
+        <h1>📊 Dashboard</h1>
+        <p>This is an example page showing how easy it is to add new tabs!</p>
+        
+        <div class="stat-grid">
+            <div class="stat-card">
+                <h3>Total Conversations</h3>
+                <div class="value">42</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Business Plans Created</h3>
+                <div class="value">17</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="value">94%</div>
+            </div>
+        </div>
+        
+        <p style="margin-top: 40px; color: #666;">
+            <strong>To add this page to your navbar:</strong><br>
+            1. Add <code>("Dashboard", "/dashboard")</code> to the tabs list<br>
+            2. This template is ready to use!
+        </p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+</body>
+</html>

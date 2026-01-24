@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Library - Business Builder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    
+    <!-- ==========================================
+         STEP 1: PASTE YOUR V0 CSS HERE
+         Your component should display business plan documents
+         Each document has: title, created_at, snapshot (business details), content_html
+         ========================================== -->
+    <style>
+        /* Default page styles - you can keep or remove these */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #144C8C, #00498D, #00264D);
+        }
+        
+        /* 👇 PASTE YOUR V0 CSS BELOW THIS LINE 👇 */
+        
+        
+        
+        /* 👆 PASTE YOUR V0 CSS ABOVE THIS LINE 👆 */
+    </style>
+</head>
+
+<body>
+    <!-- Navbar (DO NOT MODIFY) -->
+    {% include 'navbar.html' %}
+
+    <!-- ==========================================
+         STEP 2: PASTE YOUR V0 HTML HERE
+         
+         IMPORTANT: Your component should display saved documents!
+         The backend passes a 'documents' variable with this data:
+         
+         documents = [
+             {
+                 "id": "20240124_120530",
+                 "title": "My Coffee Shop",
+                 "created_at": "2024-01-24T12:05:30",
+                 "snapshot": {
+                     "Business Name": "My Coffee Shop",
+                     "Industry": "Food & Beverage",
+                     "Location": "San Francisco"
+                 },
+                 "content_html": "<h1>Business Plan</h1>..."
+             }
+         ]
+         
+         Use Jinja2 to loop through documents:
+         {% for doc in documents %}
+             <div class="document-card">
+                 <h3>{{ doc.title }}</h3>
+                 <p>Created: {{ doc.created_at }}</p>
+             </div>
+         {% endfor %}
+         
+         ========================================== -->
+    
+    <!-- 👇 PASTE YOUR V0 HTML BELOW THIS LINE 👇 -->
+    
+    <!-- Temporary placeholder - replace this with your v0 component -->
+    <div style="max-width: 1200px; margin: 40px auto; padding: 20px; background: white; border-radius: 12px;">
+        <h1>📚 Document Library</h1>
+        <p style="color: #666;">Total documents: {{ documents|length }}</p>
+        
+        {% if documents|length == 0 %}
+            <p style="color: #999; text-align: center; padding: 40px;">
+                No documents yet. Generate a business plan to see it here!
+            </p>
+        {% else %}
+            <div style="margin-top: 20px;">
+                {% for doc in documents %}
+                    <div style="border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;">
+                        <h2>{{ doc.title }}</h2>
+                        <p><strong>Created:</strong> {{ doc.created_at }}</p>
+                        <p><strong>Business Details:</strong></p>
+                        <ul>
+                            {% for key, value in doc.snapshot.items() %}
+                                <li><strong>{{ key }}:</strong> {{ value }}</li>
+                            {% endfor %}
+                        </ul>
+                        <details>
+                            <summary>View Business Plan</summary>
+                            <div style="margin-top: 20px;">
+                                {{ doc.content_html|safe }}
+                            </div>
+                        </details>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- 👆 PASTE YOUR V0 HTML ABOVE THIS LINE 👆 -->
+
+    <!-- Navbar script (DO NOT MODIFY) -->
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    
+    <!-- ==========================================
+         STEP 3: PASTE YOUR V0 JAVASCRIPT HERE (if any)
+         Add any interactivity for your document viewer
+         ========================================== -->
+    
+    <!-- 👇 PASTE YOUR V0 JAVASCRIPT BELOW THIS LINE 👇 -->
+    
+    
+    
+    <!-- 👆 PASTE YOUR V0 JAVASCRIPT ABOVE THIS LINE 👆 -->
+</body>
+</html>

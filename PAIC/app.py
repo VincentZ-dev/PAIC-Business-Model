@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template
 from google import genai
 from markdown import markdown
 import json
 import re
+import os
+from datetime import datetime
 from google.genai.errors import ClientError
 
 
@@ -19,135 +21,61 @@ conversation = []
 business_snapshot = {}
 ready_to_generate = False
 
+# Directory to store generated documents
+DOCUMENTS_DIR = "generated_documents"
+if not os.path.exists(DOCUMENTS_DIR):
+    os.makedirs(DOCUMENTS_DIR)
+
 # =========================
-# MAIN PAGE (UPDATED DESIGN)
+# MAIN PAGE
 # =========================
-MAIN_PAGE = """
-<!DOCTYPE html>
-<html>
-<head>
-<title>Business Builder</title>
-<style>
-body { margin:0; font-family:Arial; height:100vh; display:flex; }
-#left { width:50%; padding:30px; background:#00264D; overflow-y:auto; color:#FFFFFF; border-right:14px solid #FFFADA; }
-#right { width:50%; display:flex; flex-direction:column; background:#d3cebe; color:#FFFFFF; }
-#summary div { margin-bottom:14px; }
-#chat { flex:1; padding:20px; overflow-y:auto; }
-#inputBox { display:flex; padding:10px; background:#111; }
-#inputBox input {
-    flex:1;
-    padding:10px;
-    border:none;
-    outline:none;
-    color:#fff;
-    background:#222;
-}
-#inputBox button {
-    padding:0 15px;
-    background:#0077ff;
-    border:none;
-    color:#fff;
-    cursor:pointer;
-    font-size:18px;
-}
-.bigPrompt { text-align:center; margin-top:40%; font-size:20px; opacity:.8; color:#FFFFFF; }
-.smallPrompt { font-size:12px; opacity:.7; margin-bottom:10px; color:#FFFFFF; }
-.msg-user { text-align:right; margin:10px; color:#00264D; }
-.msg-ai { text-align:left; margin:10px; color:#144c8c; }
-</style>
-</head>
-
-<body>
-<div id="left">
-<h2>Business Snapshot</h2>
-<div id="summary"></div>
-</div>
-
-<div id="right">
-<div id="chat">
-<div id="prompt" class="bigPrompt">
-<b>
-  <span style="color: #000000;">
-    Tell me about the ideas you have for your business
-  </span>
-</b><br><br>
-<span style="font-size:14px; color:#000000;">
-Once you're finished, tell me "That's all" or "I'm finished".
-</span>
-</div>
-</div>
-
-<div id="inputBox">
-    <input id="input" placeholder="Type here..." onkeydown="handleKey(event)" />
-    <button onclick="send()">↑</button>
-</div>
-</div>
-
-<script>
-let firstMessage = true;
-
-function handleKey(e) {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        send();
-    }
-}
-
-function send(){
-    const input = document.getElementById("input");
-    if (!input.value.trim()) return;
-
-    if (firstMessage){
-        document.getElementById("prompt").className = "smallPrompt";
-        document.getElementById("prompt").style.marginTop = "0";
-        firstMessage = false;
-    }
-
-    addMsg("msg-user", input.value);
-
-    fetch("/chat",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({ text: input.value })
-    })
-    .then(r => r.json())
-    .then(d => {
-        addMsg("msg-ai", d.reply);
-        updateSummary(d.snapshot);
-        if (d.redirect) window.location.href = "/result";
-    });
-
-    input.value = "";
-}
-
-function addMsg(cls,text){
-    let d=document.createElement("div");
-    d.className=cls;
-    d.innerText=text;
-    document.getElementById("chat").appendChild(d);
-    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
-}
-
-function updateSummary(data){
-    const s=document.getElementById("summary");
-    s.innerHTML="";
-    Object.keys(data).forEach(k=>{
-        let d=document.createElement("div");
-        d.innerHTML = "<b>"+k+":</b> "+data[k];
-        s.appendChild(d);
-    });
-}
-</script>
-</body>
-</html>
-"""
-
 @app.route("/")
 def index():
-    return render_template_string(MAIN_PAGE)
+    tabs = [
+        ("Home", "/"),
+        ("Library", "/library")
+    ]
+    return render_template("index.html", tabs=tabs, active_tab="Home")
 
 # =========================
-# CHAT ROUTE (AI — UNCHANGED)
+# ABOUT PAGE
+# =========================
+@app.route("/library")
+def library():
+    tabs = [
+        ("Home", "/"),
+        ("Library", "/library")
+    ]
+    
+    # Load all saved documents
+    documents = []
+    if os.path.exists(DOCUMENTS_DIR):
+        for filename in sorted(os.listdir(DOCUMENTS_DIR), reverse=True):
+            if filename.endswith('.json'):
+                filepath = os.path.join(DOCUMENTS_DIR, filename)
+                with open(filepath, 'r') as f:
+                    doc = json.load(f)
+                    documents.append(doc)
+    
+    return render_template("library.html", tabs=tabs, active_tab="Library", documents=documents)
+
+# =========================
+# DASHBOARD PAGE (EXAMPLE)
+# =========================
+# Uncomment this to add a Dashboard tab:
+# @app.route("/dashboard")
+# def dashboard():
+#     tabs = [
+#         ("Home", "/"),
+#         ("Dashboard", "/dashboard"),
+#         ("About", "/about")
+#     ]
+#     return render_template("dashboard.html", tabs=tabs, active_tab="Dashboard")
+#
+# Then update all other routes to include the Dashboard tab in their tabs list!
+
+# =========================
+# CHAT API ENDPOINT
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -217,7 +145,7 @@ Respond ONLY with valid JSON:
     })
 
 # =========================
-# RESULT PAGE (UPGRADED)
+# RESULT PAGE
 # =========================
 @app.route("/result")
 def result():
@@ -242,6 +170,25 @@ def result():
         r.text,
         extensions=["fenced_code", "tables", "toc", "attr_list"]
     )
+    
+    # Save the document
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    business_name = business_snapshot.get("Business Name", "Untitled")
+    
+    document = {
+        "id": timestamp,
+        "title": business_name,
+        "created_at": datetime.now().isoformat(),
+        "snapshot": business_snapshot,
+        "content_markdown": r.text,
+        "content_html": html_output
+    }
+    
+    # Save to JSON file
+    filename = f"{timestamp}_{business_name.replace(' ', '_')}.json"
+    filepath = os.path.join(DOCUMENTS_DIR, filename)
+    with open(filepath, 'w') as f:
+        json.dump(document, f, indent=2)
 
     return f"""
 <!DOCTYPE html>
@@ -296,5 +243,3 @@ def favicon():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-#color = '''Tan:d3cebe DarkBlue:144c8c 00498D 00264D Gold:FFCC00'''
