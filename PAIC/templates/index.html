@@ -4,38 +4,52 @@
     <title>Business Builder</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
 </head>
 
 <body>
     {% include 'navbar.html' %}
 
-    <div id="content">
-        <div id="left">
-            <h2>Business Snapshot</h2>
-            <div id="summary"></div>
+    <!-- Hero Section -->
+    <section class="hero" aria-label="Hero">
+      <div class="container">
+        <h1>Your PDF projects,<br><span class="muted">organized beautifully</span></h1>
+        <p>Save, organize, and access your PDF documents with ease. Create snapshots, add tags, and find what you need instantly.</p>
+        <div class="buttons">
+          <a id="btn-get-started" class="btn" href="/builder">Get Started</a>
+          <!-- Learn More removed per request -->
         </div>
 
-        <div id="right">
-            <div id="chat">
-                <div id="prompt" class="bigPrompt">
-                    <b>
-                        <span style="color: #000000;">
-                            Tell me about the ideas you have for your business
-                        </span>
-                    </b><br><br>
-                    <span style="font-size:14px; color:#000000;">
-                        Once you're finished, tell me "That's all" or "I'm finished".
-                    </span>
-                </div>
-            </div>
-
-            <div id="inputBox">
-                <input id="input" placeholder="Type here..." onkeydown="handleKey(event)" />
-                <button onclick="send()">↑</button>
-            </div>
+        <div class="stats">
+          <div class="stat-item"><p>1,000+</p><p class="muted">Documents Saved</p></div>
+          <div class="stat-item"><p>50+</p><p class="muted">Collections</p></div>
+          <div class="stat-item"><p>99.9%</p><p class="muted">Uptime</p></div>
         </div>
+      </div>
+    </section>
+
+    <div class="home-preview">
+      <div class="container">
+        <div class="preview-grid">
+          <div class="card">
+            <h3>Build a business plan</h3>
+            <p>Use the chat on the right to describe your business and generate a complete plan.</p>
+          </div>
+          <div class="card">
+            <h3>Save & Share</h3>
+            <p>Generated documents are saved to your library for quick access.</p>
+          </div>
+          <div class="card">
+            <h3>Templates</h3>
+            <p>Get practical templates and actionable milestones for growth.</p>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Chat & Snapshot moved to a dedicated builder page. Click "Get Started" to open it. -->
+
+    <script src="{{ url_for('static', filename='js/homepage.js') }}"></script>
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>

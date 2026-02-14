@@ -1,0 +1,1 @@
+// Builder script removed — fullscreen toggle no longer used.

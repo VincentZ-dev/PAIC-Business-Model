@@ -13,7 +13,7 @@ app = Flask(__name__)
 # =========================================================
 # 🔑 GEMINI API KEY
 # =========================================================
-API_KEY = "AIzaSyATihNPWSDSdgnkIm-ItPuTi0QBgcfcPOE"
+API_KEY = "AIzaSyAPi78_IjFZunJLtq_-oYTnixB26RBX2U8"
 client = genai.Client(api_key=API_KEY)
 # =========================================================
 
@@ -33,9 +33,19 @@ if not os.path.exists(DOCUMENTS_DIR):
 def index():
     tabs = [
         ("Home", "/"),
+        ("Dashboard", "/dashboard"),
         ("Library", "/library")
     ]
     return render_template("index.html", tabs=tabs, active_tab="Home")
+
+@app.route('/builder')
+def builder():
+    tabs = [
+        ("Home", "/"),
+        ("Dashboard", "/dashboard"),
+        ("Library", "/library")
+    ]
+    return render_template('builder.html', tabs=tabs, active_tab='Home')
 
 # =========================
 # ABOUT PAGE
@@ -44,6 +54,7 @@ def index():
 def library():
     tabs = [
         ("Home", "/"),
+        ("Dashboard", "/dashboard"),
         ("Library", "/library")
     ]
     
@@ -60,19 +71,33 @@ def library():
     return render_template("library.html", tabs=tabs, active_tab="Library", documents=documents)
 
 # =========================
+# SNAPSHOT HOME (REACT CONVERTED)
+# =========================
+@app.route("/snapshot-home")
+def snapshot_home():
+    # Load all saved documents
+    documents = []
+    if os.path.exists(DOCUMENTS_DIR):
+        for filename in sorted(os.listdir(DOCUMENTS_DIR), reverse=True):
+            if filename.endswith('.json'):
+                filepath = os.path.join(DOCUMENTS_DIR, filename)
+                with open(filepath, 'r') as f:
+                    doc = json.load(f)
+                    documents.append(doc)
+    
+    return render_template("snapshot_home.html", documents=documents)
+
+# =========================
 # DASHBOARD PAGE (EXAMPLE)
 # =========================
-# Uncomment this to add a Dashboard tab:
-# @app.route("/dashboard")
-# def dashboard():
-#     tabs = [
-#         ("Home", "/"),
-#         ("Dashboard", "/dashboard"),
-#         ("About", "/about")
-#     ]
-#     return render_template("dashboard.html", tabs=tabs, active_tab="Dashboard")
-#
-# Then update all other routes to include the Dashboard tab in their tabs list!
+@app.route("/dashboard")
+def dashboard():
+    tabs = [
+        ("Home", "/"),
+        ("Dashboard", "/dashboard"),
+        ("Library", "/library")
+    ]
+    return render_template("dashboard.html", tabs=tabs, active_tab="Dashboard")
 
 # =========================
 # CHAT API ENDPOINT
@@ -236,6 +261,30 @@ body {{
 </body>
 </html>
 """
+
+# --- API: Documents list & delete (used by client-side library)
+@app.route('/api/documents')
+def api_documents():
+    docs = []
+    if os.path.exists(DOCUMENTS_DIR):
+        for filename in sorted(os.listdir(DOCUMENTS_DIR), reverse=True):
+            if filename.endswith('.json'):
+                with open(os.path.join(DOCUMENTS_DIR, filename)) as f:
+                    docs.append(json.load(f))
+    return jsonify(docs)
+
+@app.route('/api/documents/<doc_id>', methods=['DELETE'])
+def api_delete_document(doc_id):
+    # doc_id is the timestamp prefix we use when saving files
+    found = False
+    if os.path.exists(DOCUMENTS_DIR):
+        for filename in os.listdir(DOCUMENTS_DIR):
+            if filename.startswith(doc_id):
+                os.remove(os.path.join(DOCUMENTS_DIR, filename))
+                found = True
+    if found:
+        return jsonify({'ok': True})
+    return jsonify({'ok': False}), 404
 
 @app.route("/favicon.ico")
 def favicon():

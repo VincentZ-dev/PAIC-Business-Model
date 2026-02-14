@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Builder - Start</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/builder.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <main style="max-width:1200px; margin:12px auto;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
+        <h1 style="margin:0; font-size:20px;">Start building your business</h1>
+      </div>
+
+      <div id="content">
+        <div id="left">
+            <h2>Business Snapshot</h2>
+            <div id="summary"></div>
+        </div>
+
+        <div id="right">
+            <div id="chat">
+                <div id="chatInner">
+                  <div id="prompt" class="bigPrompt">
+                      <b>
+                          <span>
+                              Tell me about the ideas you have for your business
+                          </span>
+                      </b><br><br>
+                      <span style="font-size:18px;">
+                          Once you're finished, tell me "That's all" or "I'm finished".
+                      </span>
+                  </div>
+                </div>
+            </div>
+
+            <div id="inputBox">
+                <input id="input" placeholder="Type here..." onkeydown="handleKey(event)" />
+                <button onclick="send()">↑</button>
+            </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
