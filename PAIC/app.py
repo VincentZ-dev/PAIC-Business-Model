@@ -1,10 +1,7 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
 from google import genai
 from markdown import markdown
 import json
 import re
-import os
-from datetime import datetime
 from google.genai.errors import ClientError
 
 
@@ -31,55 +28,134 @@ if not os.path.exists(LOGO_DIR):
     os.makedirs(LOGO_DIR)
 
 # =========================
-# MAIN PAGE
+# MAIN PAGE (UPDATED DESIGN)
 # =========================
+MAIN_PAGE = """
+<!DOCTYPE html>
+<html>
+<head>
+<title>Business Builder</title>
+<style>
+body { margin:0; font-family:Arial; height:100vh; display:flex; }
+#left { width:50%; padding:30px; background:#00264D; overflow-y:auto; color:#FFFFFF; border-right:14px solid #FFFADA; }
+#right { width:50%; display:flex; flex-direction:column; background:#d3cebe; color:#FFFFFF; }
+#summary div { margin-bottom:14px; }
+#chat { flex:1; padding:20px; overflow-y:auto; }
+#inputBox { display:flex; padding:10px; background:#111; }
+#inputBox input {
+    flex:1;
+    padding:10px;
+    border:none;
+    outline:none;
+    color:#fff;
+    background:#222;
+}
+#inputBox button {
+    padding:0 15px;
+    background:#0077ff;
+    border:none;
+    color:#fff;
+    cursor:pointer;
+    font-size:18px;
+}
+.bigPrompt { text-align:center; margin-top:40%; font-size:20px; opacity:.8; color:#FFFFFF; }
+.smallPrompt { font-size:12px; opacity:.7; margin-bottom:10px; color:#FFFFFF; }
+.msg-user { text-align:right; margin:10px; color:#00264D; }
+.msg-ai { text-align:left; margin:10px; color:#144c8c; }
+</style>
+</head>
+
+<body>
+<div id="left">
+<h2>Business Snapshot</h2>
+<div id="summary"></div>
+</div>
+
+<div id="right">
+<div id="chat">
+<div id="prompt" class="bigPrompt">
+<b>
+  <span style="color: #000000;">
+    Tell me about the ideas you have for your business
+  </span>
+</b><br><br>
+<span style="font-size:14px; color:#000000;">
+Once you're finished, tell me "That's all" or "I'm finished".
+</span>
+</div>
+</div>
+
+<div id="inputBox">
+    <input id="input" placeholder="Type here..." onkeydown="handleKey(event)" />
+    <button onclick="send()">↑</button>
+</div>
+</div>
+
+<script>
+let firstMessage = true;
+
+function handleKey(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        send();
+    }
+}
+
+function send(){
+    const input = document.getElementById("input");
+    if (!input.value.trim()) return;
+
+    if (firstMessage){
+        document.getElementById("prompt").className = "smallPrompt";
+        document.getElementById("prompt").style.marginTop = "0";
+        firstMessage = false;
+    }
+
+    addMsg("msg-user", input.value);
+
+    fetch("/chat",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ text: input.value })
+    })
+    .then(r => r.json())
+    .then(d => {
+        addMsg("msg-ai", d.reply);
+        updateSummary(d.snapshot);
+        if (d.redirect) window.location.href = "/loading";
+    });
+
+    input.value = "";
+}
+
+function addMsg(cls,text){
+    let d=document.createElement("div");
+    d.className=cls;
+    d.innerText=text;
+    document.getElementById("chat").appendChild(d);
+    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+}
+
+function updateSummary(data){
+    const s=document.getElementById("summary");
+    s.innerHTML="";
+    Object.keys(data).forEach(k=>{
+        let d=document.createElement("div");
+        d.innerHTML = "<b>"+k+":</b> "+data[k];
+        s.appendChild(d);
+    });
+}
+</script>
+</body>
+</html>
+"""
+
 @app.route("/")
 def index():
-    tabs = [
-        ("Home", "/"),
-        ("Library", "/library")
-    ]
-    return render_template("index.html", tabs=tabs, active_tab="Home")
+    return render_template_string(MAIN_PAGE)
 
 # =========================
-# ABOUT PAGE
-# =========================
-@app.route("/library")
-def library():
-    tabs = [
-        ("Home", "/"),
-        ("Library", "/library")
-    ]
-    
-    # Load all saved documents
-    documents = []
-    if os.path.exists(DOCUMENTS_DIR):
-        for filename in sorted(os.listdir(DOCUMENTS_DIR), reverse=True):
-            if filename.endswith('.json'):
-                filepath = os.path.join(DOCUMENTS_DIR, filename)
-                with open(filepath, 'r') as f:
-                    doc = json.load(f)
-                    documents.append(doc)
-    
-    return render_template("library.html", tabs=tabs, active_tab="Library", documents=documents)
-
-# =========================
-# DASHBOARD PAGE (EXAMPLE)
-# =========================
-# Uncomment this to add a Dashboard tab:
-# @app.route("/dashboard")
-# def dashboard():
-#     tabs = [
-#         ("Home", "/"),
-#         ("Dashboard", "/dashboard"),
-#         ("About", "/about")
-#     ]
-#     return render_template("dashboard.html", tabs=tabs, active_tab="Dashboard")
-#
-# Then update all other routes to include the Dashboard tab in their tabs list!
-
-# =========================
-# CHAT API ENDPOINT
+# CHAT ROUTE (AI — UNCHANGED)
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -149,10 +225,270 @@ Respond ONLY with valid JSON:
     })
 
 # =========================
-# RESULT PAGE
+# LOADING PAGE
+# =========================
+LOADING_PAGE = """
+<!DOCTYPE html>
+<html>
+<head>
+<title>Generating Your Business Model...</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #00264D 0%, #00498D 50%, #144C8C 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.loader-container {
+    text-align: center;
+    color: #FFFFFF;
+}
+
+.loader-title {
+    font-size: 28px;
+    margin-bottom: 40px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.loader-subtitle {
+    font-size: 16px;
+    opacity: 0.8;
+    margin-bottom: 50px;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+/* Spinning circles loader */
+.spinner {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 40px;
+}
+
+.spinner-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 4px solid transparent;
+    border-radius: 50%;
+    animation: spin 1.5s linear infinite;
+}
+
+.spinner-circle:nth-child(1) {
+    border-top-color: #FFFADA;
+    animation-delay: 0s;
+}
+
+.spinner-circle:nth-child(2) {
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+    border-right-color: #D3CEBE;
+    animation-delay: 0.15s;
+    animation-direction: reverse;
+}
+
+.spinner-circle:nth-child(3) {
+    width: 60%;
+    height: 60%;
+    top: 20%;
+    left: 20%;
+    border-bottom-color: #FFFFFF;
+    animation-delay: 0.3s;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Progress dots */
+.progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    background: #FFFADA;
+    border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+.dot:nth-child(1) { animation-delay: 0s; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+.dot:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* Status messages */
+.status-message {
+    font-size: 14px;
+    opacity: 0.9;
+    animation: statusFade 3s ease-in-out infinite;
+}
+
+@keyframes statusFade {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Floating particles background */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 250, 218, 0.3);
+    border-radius: 50%;
+    animation: float 15s infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% {
+        transform: translateY(-100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="loader-container">
+    <h1 class="loader-title">Building Your Business Model</h1>
+    <p class="loader-subtitle">Our AI is crafting a personalized plan just for you</p>
+    
+    <div class="spinner">
+        <div class="spinner-circle"></div>
+        <div class="spinner-circle"></div>
+        <div class="spinner-circle"></div>
+    </div>
+    
+    <div class="progress-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    
+    <p class="status-message" id="statusMessage">Analyzing your business data...</p>
+</div>
+
+<script>
+// Create floating particles
+const particlesContainer = document.getElementById('particles');
+for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+    particlesContainer.appendChild(particle);
+}
+
+// Rotating status messages
+const messages = [
+    "Analyzing your business data...",
+    "Researching market trends...",
+    "Calculating financial projections...",
+    "Developing strategic recommendations...",
+    "Crafting your unique business plan...",
+    "Finalizing your business model..."
+];
+
+let messageIndex = 0;
+const statusElement = document.getElementById('statusMessage');
+
+setInterval(() => {
+    messageIndex = (messageIndex + 1) % messages.length;
+    statusElement.style.opacity = '0';
+    setTimeout(() => {
+        statusElement.textContent = messages[messageIndex];
+        statusElement.style.opacity = '1';
+    }, 300);
+}, 3000);
+
+// Fetch the result
+fetch('/generate-result')
+    .then(response => response.text())
+    .then(html => {
+        document.open();
+        document.write(html);
+        document.close();
+    })
+    .catch(error => {
+        document.body.innerHTML = `
+            <div style="text-align:center;color:white;padding:50px;">
+                <h2>Something went wrong</h2>
+                <p>Please <a href="/" style="color:#FFFADA;">try again</a></p>
+            </div>
+        `;
+    });
+</script>
+</body>
+</html>
+"""
+
+@app.route("/loading")
+def loading():
+    return render_template_string(LOADING_PAGE)
+
+# =========================
+# RESULT PAGE (UPGRADED)
 # =========================
 
 @app.route("/result")
+def result():
+    return render_template_string(LOADING_PAGE)
+
+@app.route("/generate-result")
 def result():
     prompt = "Generate a realistic, real-world business plan using this data:\n"
     for k, v in business_snapshot.items():
