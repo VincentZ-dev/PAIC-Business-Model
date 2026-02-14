@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from google import genai
 from markdown import markdown
 import json
@@ -13,7 +13,7 @@ app = Flask(__name__)
 # =========================================================
 # 🔑 GEMINI API KEY
 # =========================================================
-API_KEY = "AIzaSyATihNPWSDSdgnkIm-ItPuTi0QBgcfcPOE"
+API_KEY = "AIzaSyAPi78_IjFZunJLtq_-oYTnixB26RBX2U8"
 client = genai.Client(api_key=API_KEY)
 # =========================================================
 
@@ -22,9 +22,13 @@ business_snapshot = {}
 ready_to_generate = False
 
 # Directory to store generated documents
+
 DOCUMENTS_DIR = "generated_documents"
+LOGO_DIR = os.path.join("static", "generated_logos")
 if not os.path.exists(DOCUMENTS_DIR):
     os.makedirs(DOCUMENTS_DIR)
+if not os.path.exists(LOGO_DIR):
+    os.makedirs(LOGO_DIR)
 
 # =========================
 # MAIN PAGE
@@ -147,6 +151,7 @@ Respond ONLY with valid JSON:
 # =========================
 # RESULT PAGE
 # =========================
+
 @app.route("/result")
 def result():
     prompt = "Generate a realistic, real-world business plan using this data:\n"
@@ -160,7 +165,7 @@ def result():
         )
     except ClientError:
         return """
-        <h2 style="color:red;text-align:center;">
+        <h2 style=\"color:red;text-align:center;\">
             API quota reached.<br>
             Please wait a minute and refresh this page.
         </h2>
@@ -170,26 +175,52 @@ def result():
         r.text,
         extensions=["fenced_code", "tables", "toc", "attr_list"]
     )
-    
+
+    # === LOGO GENERATION ===
+    business_name = business_snapshot.get("Business Name", "Untitled")
+    logo_prompt = f"Generate a simple, modern, professional logo for a business named '{business_name}'. The logo should be visually appealing and suitable for a business plan. Return the image as a PNG."
+    logo_filename = None
+    logo_url = None
+    try:
+        # Use a Gemini model that supports image generation. Adjust model name if needed.
+        logo_response = client.models.generate_content(
+            model="gemini-2.5-pro-vision",  # Replace with the correct model for image generation if needed
+            contents=logo_prompt,
+            generation_config={"response_mime_type": "image/png"}
+        )
+        # The SDK may return image bytes as .binary or .image_data; adjust as needed
+        image_bytes = getattr(logo_response, "binary", None) or getattr(logo_response, "image_data", None)
+        if image_bytes:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            logo_filename = f"logo_{timestamp}_{business_name.replace(' ', '_')}.png"
+            logo_path = os.path.join(LOGO_DIR, logo_filename)
+            with open(logo_path, "wb") as f:
+                f.write(image_bytes)
+            logo_url = f"/static/generated_logos/{logo_filename}"
+            business_snapshot["Logo Image"] = logo_url
+    except Exception as e:
+        # If image generation fails, skip logo
+        logo_url = None
+
     # Save the document
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    business_name = business_snapshot.get("Business Name", "Untitled")
-    
     document = {
         "id": timestamp,
         "title": business_name,
         "created_at": datetime.now().isoformat(),
         "snapshot": business_snapshot,
         "content_markdown": r.text,
-        "content_html": html_output
+        "content_html": html_output,
+        "logo_url": logo_url
     }
-    
+
     # Save to JSON file
     filename = f"{timestamp}_{business_name.replace(' ', '_')}.json"
     filepath = os.path.join(DOCUMENTS_DIR, filename)
     with open(filepath, 'w') as f:
         json.dump(document, f, indent=2)
 
+    # Render result page with logo if available
     return f"""
 <!DOCTYPE html>
 <html>
@@ -225,13 +256,22 @@ body {{
     border:1px solid #D3CEBE;
     padding:8px;
 }}
+.logo-img {{
+    display:block;
+    margin:0 auto 24px auto;
+    max-width:220px;
+    max-height:220px;
+    border-radius:16px;
+    box-shadow:0 2px 12px rgba(0,0,0,.12);
+}}
 </style>
 </head>
 <body>
-<div class="card">
-<div class="markdown-output">{html_output}</div>
+<div class=\"card\">
+{f'<img src="{logo_url}" alt="Business Logo" class="logo-img">' if logo_url else ''}
+<div class=\"markdown-output\">{html_output}</div>
 <br>
-<a href="/">← Start Over</a>
+<a href=\"/\">← Start Over</a>
 </div>
 </body>
 </html>
