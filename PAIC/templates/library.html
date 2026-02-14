@@ -3,6 +3,7 @@
 <head>
     <title>Library - Business Builder</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/library.css') }}">
     
     <!-- ==========================================
          STEP 1: PASTE YOUR V0 CSS HERE
@@ -63,44 +64,56 @@
          ========================================== -->
     
     <!-- 👇 PASTE YOUR V0 HTML BELOW THIS LINE 👇 -->
-    
-    <!-- Temporary placeholder - replace this with your v0 component -->
-    <div style="max-width: 1200px; margin: 40px auto; padding: 20px; background: white; border-radius: 12px;">
-        <h1>📚 Document Library</h1>
-        <p style="color: #666;">Total documents: {{ documents|length }}</p>
-        
+
+    <div class="library-container">
+        <div class="library-header">
+            <div>
+                <h1>📚 Document Library</h1>
+                <p style="color:#c5d8f0">Total documents: {{ documents|length }}</p>
+            </div>
+            <div>
+                <input id="searchInput" class="search-input" placeholder="Search documents..." />
+            </div>
+        </div>
+
         {% if documents|length == 0 %}
-            <p style="color: #999; text-align: center; padding: 40px;">
-                No documents yet. Generate a business plan to see it here!
-            </p>
+            <div class="empty-state">
+                <p>No documents yet. Generate a business plan to see it here!</p>
+            </div>
         {% else %}
-            <div style="margin-top: 20px;">
+            <div>
                 {% for doc in documents %}
-                    <div style="border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;">
-                        <h2>{{ doc.title }}</h2>
-                        <p><strong>Created:</strong> {{ doc.created_at }}</p>
-                        <p><strong>Business Details:</strong></p>
-                        <ul>
-                            {% for key, value in doc.snapshot.items() %}
-                                <li><strong>{{ key }}:</strong> {{ value }}</li>
-                            {% endfor %}
-                        </ul>
-                        <details>
-                            <summary>View Business Plan</summary>
-                            <div style="margin-top: 20px;">
-                                {{ doc.content_html|safe }}
-                            </div>
-                        </details>
+                    <div class="document-card">
+                        <div class="meta">
+                            <h2>{{ doc.title }}</h2>
+                            <p><strong>Created:</strong> {{ doc.created_at }}</p>
+                            <p style="margin-top:8px;"><strong>Business Details:</strong></p>
+                            <ul>
+                                {% for key, value in doc.snapshot.items() %}
+                                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div class="actions">
+                            <a class="btn-link" href="#" onclick="event.preventDefault(); var el=document.getElementById('doc-{{ doc.id }}'); el.style.display=(el.style.display==='none' || el.style.display==='') ? 'block' : 'none';">Preview</a>
+                            <button class="btn-danger" onclick="deleteDoc('{{ doc.id }}', this)">Delete</button>
+                        </div>
+                    </div>
+
+                    <div id="doc-{{ doc.id }}" style="display:none; margin-bottom:24px;">
+                        <div style="background:#fff; padding:18px; border-radius:8px;">{{ doc.content_html|safe }}</div>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
     </div>
-    
+
     <!-- 👆 PASTE YOUR V0 HTML ABOVE THIS LINE 👆 -->
 
     <!-- Navbar script (DO NOT MODIFY) -->
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/library.js') }}"></script>
     
     <!-- ==========================================
          STEP 3: PASTE YOUR V0 JAVASCRIPT HERE (if any)

@@ -613,6 +613,30 @@ body {{
 </html>
 """
 
+# --- API: Documents list & delete (used by client-side library)
+@app.route('/api/documents')
+def api_documents():
+    docs = []
+    if os.path.exists(DOCUMENTS_DIR):
+        for filename in sorted(os.listdir(DOCUMENTS_DIR), reverse=True):
+            if filename.endswith('.json'):
+                with open(os.path.join(DOCUMENTS_DIR, filename)) as f:
+                    docs.append(json.load(f))
+    return jsonify(docs)
+
+@app.route('/api/documents/<doc_id>', methods=['DELETE'])
+def api_delete_document(doc_id):
+    # doc_id is the timestamp prefix we use when saving files
+    found = False
+    if os.path.exists(DOCUMENTS_DIR):
+        for filename in os.listdir(DOCUMENTS_DIR):
+            if filename.startswith(doc_id):
+                os.remove(os.path.join(DOCUMENTS_DIR, filename))
+                found = True
+    if found:
+        return jsonify({'ok': True})
+    return jsonify({'ok': False}), 404
+
 @app.route("/favicon.ico")
 def favicon():
     return "", 204

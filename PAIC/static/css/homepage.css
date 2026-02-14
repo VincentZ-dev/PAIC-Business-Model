@@ -1,0 +1,48 @@
+/* Homepage hero styles */
+:root{
+  --primary:#00498D;
+  --accent:#FFFADA;
+  --muted:#6b7280;
+}
+
+.hero {
+  background: linear-gradient(135deg,var(--primary),#00264D);
+  color: #fff;
+  padding: 40px 16px 32px; /* reduced padding to remove extra whitespace */
+  margin-bottom: 8px;
+}
+
+.hero .container { max-width: 1200px; margin: 0 auto; text-align: center; }
+.hero h1 { font-size: 2.25rem; line-height: 1.05; margin: 0 auto; max-width: 900px; }
+.hero h1 .muted { color: #CFE3F6; }
+.hero p { max-width: 800px; margin: 18px auto 0; color: rgba(255,255,255,0.9); }
+.hero .buttons { margin-top: 20px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap }
+.btn { background: var(--accent); color: var(--primary); border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600 }
+.btn.outline { background:transparent; color: #fff; border:1px solid rgba(255,255,255,0.12) }
+
+.hero .stats { display:flex; justify-content:center; gap:28px; margin-top:32px; color: rgba(255,255,255,0.9) }
+.hero .stat-item { text-align:center }
+.hero .stat-item p:first-child { font-size:1.5rem; font-weight:700; margin:0 }
+
+/* small screens */
+@media (max-width:768px){
+  .hero h1{font-size:1.6rem}
+  .hero .stats {flex-direction:column; gap:12px}
+}
+
+/* Chat anchor */
+#chat { scroll-behavior: smooth }
+
+/* Minor CTA styles on homepage below hero */
+.home-preview { max-width:1200px; margin: 12px auto; padding: 14px; }
+.preview-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px }
+.card { background:#fff; color:#00264D; padding:12px; border-radius:10px; box-shadow:0 6px 18px rgba(2,6,23,0.08) }
+.card h3{ margin:0 0 6px }
+.card p{ margin:0; color:var(--muted) }
+
+/* Keep existing page layout responsive */
+@media (max-width: 900px){
+  #content{flex-direction:column}
+  #left, #right{width:100%}
+  .bigPrompt{margin-top:12%}
+}

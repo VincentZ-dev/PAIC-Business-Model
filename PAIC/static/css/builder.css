@@ -1,0 +1,75 @@
+/* Builder full-screen style + chat scaling */
+:root { --builder-navbar-height: 64px; }
+
+/* Make the builder content span the viewport height */
+main, html, body { height: 100%; }
+
+#content {
+  display: flex;
+  gap: 18px;
+  margin: 0 auto;
+  width: calc(100% - 0px);
+  /* Use most of the viewport (below navbar) */
+  height: calc(100vh - var(--builder-navbar-height) - 48px);
+}
+
+#left {
+  width: 20%;
+  min-width: 300px;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+#right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* chat area handles its own padding */
+}
+
+/* Make the chat area use full height and scale it to the viewport */
+#chat {
+  flex: 1;
+  padding: 48px 48px;
+  background: linear-gradient(180deg,#f7fbff 0%,#fff 100%);
+  border-radius: 12px 0 0 12px;
+  overflow: hidden; /* prevent native scrolling */
+  position: relative;
+}
+
+/* Inner container that will be scaled to fit */
+#chatInner {
+  width: 100%;
+  transform-origin: top left;
+  transition: transform 120ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 6px; /* small bottom padding to prevent cropping */
+}
+
+/* Larger prompt styling — applied by default for a full-screen feel */
+.bigPrompt {
+  text-align: center;
+  margin-top: 6%;
+  font-size: 34px; /* scaled up */
+  line-height: 1.12;
+  padding: 48px 24px;
+}
+/* Make input bar stick to bottom and visually prominent */
+#inputBox { padding: 18px; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 -2px 8px rgba(2,6,23,0.03); }
+
+/* Responsive: smaller devices scale down */
+@media (max-width: 900px) {
+  #left { width: 100%; min-width: auto; }
+  #chat { padding: 24px; }
+  .bigPrompt { font-size: 20px; margin-top: 5%; padding: 20px 14px; }
+}
+
+/* Responsive: small screens stack columns */
+@media (max-width: 900px) {
+  #content { flex-direction: column; height: auto; }
+  #left { width: 100%; min-width: auto; }
+  #right { width: 100%; }
+  .bigPrompt { font-size: 20px; margin-top: 6%; }
+}

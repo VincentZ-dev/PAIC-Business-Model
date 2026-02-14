@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapshot - PDF Library</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/globals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/snapshot.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <!-- Logo -->
+            <a href="/snapshot-home" class="navbar-brand">
+                <svg class="h-8 w-8 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                </svg>
+                <span>Snapshot</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <nav class="navbar-nav hidden md:flex">
+                <a href="/snapshot-home" class="navbar-link">Library</a>
+                <a href="/snapshot-home" class="navbar-link">Recent</a>
+                <a href="/snapshot-home" class="navbar-link">Collections</a>
+            </nav>
+
+            <!-- Desktop Actions -->
+            <div class="navbar-actions hidden md:flex">
+                <button id="searchBtn" class="navbar-search-btn" onclick="toggleSearch()">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <button class="navbar-new-btn">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    New Project
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuBtn" class="md:hidden" onclick="toggleMobileMenu()">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="navbar-mobile hidden md:hidden">
+            <nav class="navbar-mobile-nav">
+                <a href="/snapshot-home" class="navbar-mobile-link">Library</a>
+                <a href="/snapshot-home" class="navbar-mobile-link">Recent</a>
+                <a href="/snapshot-home" class="navbar-mobile-link">Collections</a>
+            </nav>
+            <div class="navbar-mobile-actions">
+                <input type="search" placeholder="Search projects..." class="navbar-mobile-search">
+                <button class="navbar-mobile-btn">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    New Project
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-background"></div>
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Your PDF projects,<br>
+                    <span class="hero-subtitle">organized beautifully</span>
+                </h1>
+                <p class="hero-description">
+                    Save, organize, and access your PDF documents with ease. Create snapshots, add tags, and find what you need instantly.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary">
+                        Get Started
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-outline">Learn More</button>
+                </div>
+
+                <!-- Stats -->
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <p class="stat-number">1,000+</p>
+                        <p class="stat-label">Documents Saved</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-number">50+</p>
+                        <p class="stat-label">Collections</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-number">99.9%</p>
+                        <p class="stat-label">Uptime</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section class="projects-section">
+            <!-- Header -->
+            <div class="projects-header">
+                <div>
+                    <h2 class="projects-title">Saved Projects</h2>
+                    <p class="projects-count">{{ documents|length }} projects in your library</p>
+                </div>
+
+                <div class="projects-controls">
+                    <select id="sortBy" class="sort-select" onchange="updateSort(this.value)">
+                        <option value="recent">Recently Modified</option>
+                        <option value="name">Name</option>
+                        <option value="pages">Page Count</option>
+                    </select>
+
+                    <div class="view-toggle">
+                        <button class="view-btn active" onclick="setViewMode('grid')" title="Grid view">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z"/>
+                            </svg>
+                        </button>
+                        <button class="view-btn" onclick="setViewMode('list')" title="List view">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Grid/List -->
+            <div id="projectsContainer" class="projects-grid">
+                {% if documents|length == 0 %}
+                    <div class="empty-state">
+                        <p>No documents yet. Generate a business plan to see it here!</p>
+                    </div>
+                {% else %}
+                    {% for doc in documents %}
+                        <article class="project-card">
+                            <div class="project-thumbnail">
+                                <svg class="h-12 w-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div class="project-content">
+                                <div class="project-header">
+                                    <h3 class="project-title">{{ doc.title }}</h3>
+                                    <button class="project-menu" onclick="toggleMenu(event)">
+                                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2"/>
+                                            <circle cx="12" cy="12" r="2"/>
+                                            <circle cx="12" cy="19" r="2"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="project-description">{{ doc.snapshot.get('Business Description', 'No description available') }}</p>
+
+                                <!-- Tags -->
+                                {% if doc.snapshot.get('Industry') or doc.snapshot.get('Location') %}
+                                    <div class="project-tags">
+                                        {% if doc.snapshot.get('Industry') %}
+                                            <span class="tag">{{ doc.snapshot['Industry'] }}</span>
+                                        {% endif %}
+                                        {% if doc.snapshot.get('Location') %}
+                                            <span class="tag">{{ doc.snapshot['Location'] }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Meta -->
+                                <div class="project-meta">
+                                    <span class="meta-item">
+                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                        PDF
+                                    </span>
+                                    <span class="meta-item">
+                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 4H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V6h14v14zm-5.04-6.71l-2.75 3.54-1.3-1.54c-.4-.5-1.1-.5-1.5 0-.4.5-.4 1.24 0 1.74l2.05 2.42c.4.5 1.1.5 1.5 0l3.75-4.74c.4-.5.4-1.24 0-1.74-.4-.5-1.1-.5-1.5 0z"/>
+                                        </svg>
+                                        {{ doc.created_at | slice(-5) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p class="footer-text">Your PDF snapshot library</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleSearch() {
+            alert("Search functionality coming soon!");
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function toggleMenu(event) {
+            event.preventDefault();
+            alert("Menu options coming soon!");
+        }
+
+        function setViewMode(mode) {
+            const container = document.getElementById('projectsContainer');
+            const buttons = document.querySelectorAll('.view-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.view-btn').classList.add('active');
+            
+            if (mode === 'list') {
+                container.classList.remove('projects-grid');
+                container.classList.add('projects-list');
+            } else {
+                container.classList.remove('projects-list');
+                container.classList.add('projects-grid');
+            }
+        }
+
+        function updateSort(value) {
+            console.log('Sorting by:', value);
+            // TODO: Implement sorting logic
+        }
+    </script>
+</body>
+</html>
